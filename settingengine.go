@@ -58,7 +58,9 @@ type SettingEngine struct {
 	BufferFactory                             func(packetType packetio.BufferPacketType, ssrc uint32) io.ReadWriteCloser
 	LoggerFactory                             logging.LoggerFactory
 	iceTCPMux                                 ice.TCPMux
+	iceUDPMux                                 ice.UDPMux
 	iceProxyDialer                            proxy.Dialer
+	disableMediaEngineCopy                    bool
 }
 
 // DetachDataChannels enables detaching data channels. When enabled
@@ -251,7 +253,21 @@ func (e *SettingEngine) SetICETCPMux(tcpMux ice.TCPMux) {
 	e.iceTCPMux = tcpMux
 }
 
+// SetICEUDPMux allows ICE traffic to come through a single UDP port, drastically
+// simplifying deployments where ports will need to be opened/forwarded.
+// UDPMux should be started prior to creating PeerConnections.
+func (e *SettingEngine) SetICEUDPMux(udpMux ice.UDPMux) {
+	e.iceUDPMux = udpMux
+}
+
 // SetICEProxyDialer sets the proxy dialer interface based on golang.org/x/net/proxy.
 func (e *SettingEngine) SetICEProxyDialer(d proxy.Dialer) {
 	e.iceProxyDialer = d
+}
+
+// DisableMediaEngineCopy stops the MediaEngine from being copied. This allows a user to modify
+// the MediaEngine after the PeerConnection has been constructed. This is useful if you wish to
+// modify codecs after signaling. Make sure not to share MediaEngines between PeerConnections.
+func (e *SettingEngine) DisableMediaEngineCopy(isDisabled bool) {
+	e.disableMediaEngineCopy = isDisabled
 }
